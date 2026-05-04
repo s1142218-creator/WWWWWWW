@@ -30,8 +30,10 @@
 ## 修改记录
 
 ### 2026-05-04
+- [257d92b] first commit
 - [c754d69] fix: 更新页面标题为双语显示
 - [8cb363d] docs: 更新 README.md 并修复编码
 - [581f717] feat: 初始化太空侵略者游戏项目
 - [7255233] docs: 更新页面标题为双语
 - 修改文件: space-invaders.html 
+- space-invaders.html
