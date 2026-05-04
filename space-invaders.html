@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>太空侵略者</title>
+    <style>
+        body {
+            margin: 0;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+        }
+        h1 { margin: 10px 0; text-shadow: 0 0 10px #0f0; }
+        canvas {
+            border: 2px solid #0f0;
+            box-shadow: 0 0 20px #0f0;
+        }
+        .score {
+            font-size: 24px;
+            margin: 10px;
+        }
+        .controls {
+            margin-top: 10px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <h1>太空侵略者</h1>
+    <div class="score">分數: <span id="score">0</span></div>
+    <canvas id="game" width="600" height="500"></canvas>
+    <div class="controls">← → 移動 | 空白鍵 射擊 | R 重新開始</div>
+
+    <script>
+        const canvas = document.getElementById('game');
+        const ctx = canvas.getContext('2d');
+        const scoreEl = document.getElementById('score');
+
+        let player = { x: 275, y: 460, width: 40, height: 20, speed: 5 };
+        let bullets = [];
+        let enemies = [];
+        let enemyBullets = [];
+        let score = 0;
+        let gameOver = false;
+        let keys = {};
+
+        function initEnemies() {
+            enemies = [];
+            for (let row = 0; row < 4; row++) {
+                for (let col = 0; col < 8; col++) {
+                    enemies.push({
+                        x: 50 + col * 60,
+                        y: 50 + row * 40,
+                        width: 30,
+                        height: 20,
+                        alive: true
+                    });
+                }
+            }
+        }
+
+        function drawPlayer() {
+            ctx.fillStyle = '#0f0';
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            ctx.fillRect(player.x + 15, player.y - 10, 10, 10);
+        }
+
+        function drawEnemies() {
+            enemies.forEach(e => {
+                if (e.alive) {
+                    ctx.fillStyle = '#f00';
+                    ctx.fillRect(e.x, e.y, e.width, e.height);
+                    ctx.fillStyle = '#fff';
+                    ctx.fillRect(e.x + 5, e.y + 5, 5, 5);
+                    ctx.fillRect(e.x + 20, e.y + 5, 5, 5);
+                }
+            });
+        }
+
+        function drawBullets() {
+            ctx.fillStyle = '#ff0';
+            bullets.forEach(b => ctx.fillRect(b.x, b.y, 4, 10));
+            ctx.fillStyle = '#f0f';
+            enemyBullets.forEach(b => ctx.fillRect(b.x, b.y, 4, 10));
+        }
+
+        function update() {
+            if (gameOver) return;
+
+            if (keys['ArrowLeft'] && player.x > 0) player.x -= player.speed;
+            if (keys['ArrowRight'] && player.x < canvas.width - player.width) player.x += player.speed;
+
+            bullets.forEach((b, i) => {
+                b.y -= 7;
+                if (b.y < 0) bullets.splice(i, 1);
+            });
+
+            enemyBullets.forEach((b, i) => {
+                b.y += 4;
+                if (b.y > canvas.height) enemyBullets.splice(i, 1);
+            });
+
+            bullets.forEach((b, bi) => {
+                enemies.forEach(e => {
+                    if (e.alive && 
+                        b.x < e.x + e.width && b.x + 4 > e.x &&
+                        b.y < e.y + e.height && b.y + 10 > e.y) {
+                        e.alive = false;
+                        bullets.splice(bi, 1);
+                        score += 10;
+                        scoreEl.textContent = score;
+                    }
+                });
+            });
+
+            enemyBullets.forEach((b, bi) => {
+                if (b.x < player.x + player.width && b.x + 4 > player.x &&
+                    b.y < player.y + player.height && b.y + 10 > player.y) {
+                    gameOver = true;
+                }
+            });
+
+            if (Math.random() < 0.02) {
+                const alive = enemies.filter(e => e.alive);
+                if (alive.length > 0) {
+                    const e = alive[Math.floor(Math.random() * alive.length)];
+                    enemyBullets.push({ x: e.x + e.width/2, y: e.y + e.height });
+                }
+            }
+
+            enemies.forEach(e => {
+                if (e.alive && e.y + e.height > player.y) {
+                    gameOver = true;
+                }
+            });
+
+            if (enemies.every(e => !e.alive)) {
+                initEnemies();
+            }
+        }
+
+        function draw() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            drawPlayer();
+            drawEnemies();
+            drawBullets();
+
+            if (gameOver) {
+                ctx.fillStyle = '#fff';
+                ctx.font = '40px Courier New';
+                ctx.textAlign = 'center';
+                ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2);
+                ctx.font = '20px Courier New';
+                ctx.fillText('按 R 重新開始', canvas.width/2, canvas.height/2 + 40);
+            }
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        document.addEventListener('keydown', e => {
+            keys[e.key] = true;
+            if (e.key === ' ' && !gameOver) {
+                bullets.push({ x: player.x + player.width/2 - 2, y: player.y });
+            }
+            if (e.key === 'r' || e.key === 'R') {
+                score = 0;
+                scoreEl.textContent = score;
+                bullets = [];
+                enemyBullets = [];
+                player.x = 275;
+                gameOver = false;
+                initEnemies();
+            }
+        });
+
+        document.addEventListener('keyup', e => keys[e.key] = false);
+
+        initEnemies();
+        gameLoop();
+    </script>
+</body>
+</html>
