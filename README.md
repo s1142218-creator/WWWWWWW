@@ -36,6 +36,6 @@
 - [8cb363d] docs: 更新 README.md 並修復編碼
 - [581f717] feat: 初始化太空侵略者遊戲專案
 - [7255233] docs: 更新頁面標題為雙語
-- 修改檔案: space-invaders.html 
+- 修改檔案: space-invaders.html
 - space-invaders.html
 - space-invaders.html
